@@ -61,6 +61,33 @@ body {
     display: inline-block;
 }
 
+.sync-info {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+
+.sync-status {
+    font-size: 20px;
+    line-height: 1.6;
+}
+
+.sync-fast {
+    color: #ffd700;
+}
+
+.sync-slow {
+    color: #ff6b6b;
+}
+
+.sync-perfect {
+    color: #51cf66;
+}
+
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

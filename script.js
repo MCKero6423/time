@@ -1,5 +1,9 @@
 const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
+// 存储时间同步信息
+let timeDifference = null;
+let syncAccuracy = null;
+
 const worldCities = [
     { name: '北京', timezone: 'Asia/Shanghai', flag: '🇨🇳' },
     { name: '东京', timezone: 'Asia/Tokyo', flag: '🇯🇵' },
@@ -71,8 +75,71 @@ function updateWorldTimes() {
     }).join('');
 }
 
+// 检查系统时间精确度
+async function checkTimeAccuracy() {
+    try {
+        const t0 = performance.now();
+        const localTimeBefore = Date.now();
+        
+        // 使用 worldtimeapi.org 作为时间源
+        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+        
+        const t1 = performance.now();
+        const localTimeAfter = Date.now();
+        
+        const data = await response.json();
+        const serverTime = data.unixtime * 1000 + Math.floor(data.raw_offset * 1000);
+        
+        // 计算往返延迟
+        const roundTripTime = t1 - t0;
+        syncAccuracy = roundTripTime / 2;
+        
+        // 估算服务器时间（考虑网络延迟）
+        const estimatedServerTime = serverTime + (roundTripTime / 2);
+        const localTimeMiddle = (localTimeBefore + localTimeAfter) / 2;
+        
+        // 计算时间差（正数表示本地时间快，负数表示慢）
+        timeDifference = (localTimeMiddle - estimatedServerTime) / 1000;
+        
+        updateSyncInfo();
+    } catch (error) {
+        console.error('时间同步检测失败:', error);
+        document.getElementById('syncInfo').innerHTML = '<div class="sync-status">无法连接到时间服务器</div>';
+    }
+}
+
+// 更新同步信息显示
+function updateSyncInfo() {
+    const syncInfoEl = document.getElementById('syncInfo');
+    
+    if (timeDifference === null) {
+        syncInfoEl.innerHTML = '<div class="sync-status">检测中...</div>';
+        return;
+    }
+    
+    const absDiff = Math.abs(timeDifference);
+    let statusClass = 'sync-perfect';
+    let statusText = '';
+    
+    if (absDiff < 0.1) {
+        statusClass = 'sync-perfect';
+        statusText = '您的系统时间非常精确！';
+    } else if (timeDifference > 0) {
+        statusClass = 'sync-fast';
+        statusText = `您的系统时间快了 ${absDiff.toFixed(1)} 秒钟。`;
+    } else {
+        statusClass = 'sync-slow';
+        statusText = `您的系统时间慢了 ${absDiff.toFixed(1)} 秒钟。`;
+    }
+    
+    const accuracyText = `<br>同步精确度为 ±${syncAccuracy.toFixed(0)} 毫秒。`;
+    
+    syncInfoEl.innerHTML = `<div class="sync-status ${statusClass}">${statusText}${accuracyText}</div>`;
+}
+
 // 初始更新
 updateTime();
+checkTimeAccuracy();
 
 // 每秒更新
 setInterval(updateTime, 1000);
