@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间服务 - time.mckero.com</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-time">
+            <div class="time-display" id="currentTime">00:00:00</div>
+            <div class="date-display" id="currentDate">2024年1月1日</div>
+            <div class="week-display" id="currentWeek">星期一</div>
+            <div class="timezone-display" id="timezone">GMT+8</div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>Unix 时间戳</h3>
+                <div class="value" id="timestamp">0</div>
+            </div>
+            <div class="info-card">
+                <h3>ISO 8601</h3>
+                <div class="value" id="iso8601" style="font-size: 18px;">-</div>
+            </div>
+            <div class="info-card">
+                <h3>UTC 时间</h3>
+                <div class="value" id="utcTime" style="font-size: 24px;">00:00:00</div>
+            </div>
+        </div>
+
+        <div class="world-times">
+            <h2>🌍 世界时间</h2>
+            <div class="world-grid" id="worldTimes"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
