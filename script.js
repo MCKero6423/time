@@ -77,35 +77,62 @@ function updateWorldTimes() {
 
 // 检查系统时间精确度
 async function checkTimeAccuracy() {
-    try {
-        const t0 = performance.now();
-        const localTimeBefore = Date.now();
-        
-        // 使用 worldtimeapi.org 作为时间源
-        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
-        
-        const t1 = performance.now();
-        const localTimeAfter = Date.now();
-        
-        const data = await response.json();
-        const serverTime = data.unixtime * 1000 + Math.floor(data.raw_offset * 1000);
-        
-        // 计算往返延迟
-        const roundTripTime = t1 - t0;
-        syncAccuracy = roundTripTime / 2;
-        
-        // 估算服务器时间（考虑网络延迟）
-        const estimatedServerTime = serverTime + (roundTripTime / 2);
-        const localTimeMiddle = (localTimeBefore + localTimeAfter) / 2;
-        
-        // 计算时间差（正数表示本地时间快，负数表示慢）
-        timeDifference = (localTimeMiddle - estimatedServerTime) / 1000;
-        
-        updateSyncInfo();
-    } catch (error) {
-        console.error('时间同步检测失败:', error);
-        document.getElementById('syncInfo').innerHTML = '<div class="sync-status">无法连接到时间服务器</div>';
+    const apis = [
+        {
+            name: 'WorldTimeAPI',
+            url: 'https://worldtimeapi.org/api/timezone/Etc/UTC',
+            parse: (data) => data.unixtime * 1000
+        },
+        {
+            name: 'TimeAPI',
+            url: 'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
+            parse: (data) => new Date(data.dateTime).getTime()
+        },
+        {
+            name: 'WorldClockAPI',
+            url: 'https://worldclockapi.com/api/json/utc/now',
+            parse: (data) => new Date(data.currentDateTime).getTime()
+        }
+    ];
+    
+    for (const api of apis) {
+        try {
+            const t0 = performance.now();
+            const localTimeBefore = Date.now();
+            
+            const response = await fetch(api.url, {
+                cache: 'no-cache'
+            });
+            
+            if (!response.ok) continue;
+            
+            const t1 = performance.now();
+            const localTimeAfter = Date.now();
+            
+            const data = await response.json();
+            const serverTime = api.parse(data);
+            
+            // 计算往返延迟
+            const roundTripTime = t1 - t0;
+            syncAccuracy = roundTripTime / 2;
+            
+            // 估算服务器时间（考虑网络延迟）
+            const estimatedServerTime = serverTime + (roundTripTime / 2);
+            const localTimeMiddle = (localTimeBefore + localTimeAfter) / 2;
+            
+            // 计算时间差（正数表示本地时间快，负数表示慢）
+            timeDifference = (localTimeMiddle - estimatedServerTime) / 1000;
+            
+            updateSyncInfo();
+            return; // 成功则退出
+        } catch (error) {
+            console.log(`${api.name} 失败，尝试下一个...`, error);
+            continue;
+        }
     }
+    
+    // 所有 API 都失败
+    document.getElementById('syncInfo').innerHTML = '<div class="sync-status">无法连接到时间服务器，请检查网络连接</div>';
 }
 
 // 更新同步信息显示
